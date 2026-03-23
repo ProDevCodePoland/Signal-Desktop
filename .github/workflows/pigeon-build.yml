@@ -1,0 +1,147 @@
+name: Pigeon Build
+
+on:
+  push:
+    branches:
+      - 'pigeon-*'
+
+jobs:
+  linux:
+    name: Build Linux (.deb)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+          cache-dependency-path: 'pnpm-lock.yaml'
+
+      - name: Install xvfb and libpulse0
+        run: sudo apt-get install xvfb libpulse0 || (sudo apt-get update && sudo apt-get install xvfb libpulse0)
+
+      - name: Install node_modules
+        run: pnpm install
+        env:
+          NPM_CONFIG_LOGLEVEL: verbose
+
+      - run: pnpm run generate
+      - run: pnpm run prepare-beta-build
+
+      - name: Create bundle
+        run: pnpm run build:esbuild:prod
+
+      - name: Create preload cache
+        run: xvfb-run --auto-servernum pnpm run build:preload-cache
+        env:
+          ARTIFACTS_DIR: artifacts/linux
+
+      - name: Build .deb
+        run: pnpm run build:release --publish=never
+        env:
+          DISABLE_INSPECT_FUSE: on
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-artifacts
+          path: artifacts/linux
+
+  macos:
+    name: Build macOS (.dmg)
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+          cache-dependency-path: 'pnpm-lock.yaml'
+
+      - name: Install node_modules
+        run: pnpm install
+        env:
+          NPM_CONFIG_LOGLEVEL: verbose
+
+      - run: pnpm run generate
+      - run: pnpm run prepare-beta-build
+      - run: touch noop.sh && chmod +x noop.sh
+
+      - name: Build .dmg
+        run: pnpm run build
+        env:
+          DISABLE_INSPECT_FUSE: on
+          SIGN_MACOS_SCRIPT: noop.sh
+          ARTIFACTS_DIR: artifacts/macos
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-artifacts
+          path: artifacts/macos
+
+  windows:
+    name: Build Windows (.exe)
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - run: git config --global core.autocrlf false
+      - run: git config --global core.eol lf
+
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+          cache-dependency-path: 'pnpm-lock.yaml'
+
+      - name: Install node_modules
+        run: pnpm install
+        env:
+          NPM_CONFIG_LOGLEVEL: verbose
+
+      - run: pnpm run generate
+      - run: copy package.json temp.json
+      - run: del package.json
+      - run: type temp.json | findstr /v certificateSubjectName | findstr /v certificateSha1 > package.json
+      - run: pnpm run prepare-beta-build
+
+      - name: Create bundle
+        run: pnpm run build:esbuild:prod
+
+      - name: Create preload cache
+        run: pnpm run build:preload-cache
+        env:
+          ARTIFACTS_DIR: artifacts/win
+
+      - name: Build .exe
+        run: pnpm run build:release
+        env:
+          DISABLE_INSPECT_FUSE: on
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-artifacts
+          path: artifacts/win
+
