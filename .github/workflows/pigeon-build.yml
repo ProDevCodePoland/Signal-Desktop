@@ -5,6 +5,9 @@ on:
     branches:
       - 'pigeon-*'
 
+permissions:
+  contents: write
+
 jobs:
   linux:
     name: Build Linux (.deb)
@@ -175,3 +178,54 @@ jobs:
             release/**/*.yml
             release/**/*.blockmap
           if-no-files-found: error
+
+  publish-release:
+    name: Tag and Publish Release
+    needs: [linux, macos, windows]
+    runs-on: ubuntu-22.04
+    if: success()
+    timeout-minutes: 20
+
+    steps:
+      - name: Generate release metadata
+        id: meta
+        run: |
+          SAFE_REF="${GITHUB_REF_NAME//\//-}"
+          TAG="${SAFE_REF}-build-${GITHUB_RUN_NUMBER}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "release_name=Pigeon ${SAFE_REF} build ${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-artifacts
+          path: release-assets/linux
+
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-artifacts
+          path: release-assets/macos
+
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-artifacts
+          path: release-assets/windows
+
+      - name: Inspect collected release assets
+        run: find release-assets -type f | sort
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ steps.meta.outputs.release_name }}
+          generate_release_notes: true
+          prerelease: true
+          files: |
+            release-assets/linux/**
+            release-assets/macos/**
+            release-assets/windows/**
+
