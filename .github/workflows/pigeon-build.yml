@@ -48,11 +48,21 @@ jobs:
         env:
           DISABLE_INSPECT_FUSE: on
 
+      - name: Inspect Linux outputs
+        run: |
+          ls -la release || true
+          find release -maxdepth 2 -type f \( -name '*.deb' -o -name '*.AppImage' -o -name '*.yml' -o -name '*.blockmap' \) || true
+
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
         with:
           name: linux-artifacts
-          path: artifacts/linux
+          path: |
+            release/**/*.deb
+            release/**/*.AppImage
+            release/**/*.yml
+            release/**/*.blockmap
+          if-no-files-found: error
 
   macos:
     name: Build macOS (.dmg)
@@ -88,11 +98,21 @@ jobs:
           SIGN_MACOS_SCRIPT: noop.sh
           ARTIFACTS_DIR: artifacts/macos
 
+      - name: Inspect macOS outputs
+        run: |
+          ls -la release || true
+          find release -maxdepth 2 -type f \( -name '*.dmg' -o -name '*.zip' -o -name '*.yml' -o -name '*.blockmap' \) || true
+
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
           name: macos-artifacts
-          path: artifacts/macos
+          path: |
+            release/**/*.dmg
+            release/**/*.zip
+            release/**/*.yml
+            release/**/*.blockmap
+          if-no-files-found: error
 
   windows:
     name: Build Windows (.exe)
@@ -139,9 +159,19 @@ jobs:
         env:
           DISABLE_INSPECT_FUSE: on
 
+      - name: Inspect Windows outputs
+        shell: pwsh
+        run: |
+          if (Test-Path release) { Get-ChildItem -Path release -Recurse -File | Select-Object FullName }
+
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-artifacts
-          path: artifacts/win
-
+          path: |
+            release/**/*.exe
+            release/**/*.msi
+            release/**/*.nupkg
+            release/**/*.yml
+            release/**/*.blockmap
+          if-no-files-found: error
