@@ -267,6 +267,7 @@ function QRCodeImage({
   link: string;
 }): React.JSX.Element {
   const [isCopying, setIsCopying] = useState(false);
+  const linkDeviceInfo = parseLinkDeviceInfo(link);
 
   // Add a development-only feature to copy a QR code to the clipboard by double-clicking.
   // This can be used to quickly inspect the code, or to link this Desktop with an iOS
@@ -293,22 +294,77 @@ function QRCodeImage({
     return () => clearTimeout(timer);
   }, [isCopying]);
 
+  const onCopyMetadata = useCallback((value: string) => {
+    drop(navigator.clipboard.writeText(value));
+  }, []);
+
   return (
-    <svg
-      role="img"
-      aria-label={i18n('icu:Install__scan-this-code')}
-      className={classNames(
-        getQrCodeClassName('__code'),
-        isCopying && getQrCodeClassName('__code--copying')
+    <>
+      <svg
+        role="img"
+        aria-label={i18n('icu:Install__scan-this-code')}
+        className={classNames(
+          getQrCodeClassName('__code'),
+          isCopying && getQrCodeClassName('__code--copying')
+        )}
+        onDoubleClick={onDoubleClick}
+        viewBox="0 0 16 16"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <BrandedQRCode size={16} link={link} color="black" />
+      </svg>
+      {linkDeviceInfo && (
+        <div className={getQrCodeClassName('__metadata')}>
+          <div className={getQrCodeClassName('__metadata-value')}>
+            Pigeon Linked Device
+          </div>
+          <div className={getQrCodeClassName('__metadata-value')}>
+            <code>linking_url: {link}</code>{' '}
+            <button type="button" onClick={() => onCopyMetadata(link)}>
+              Copy
+            </button>
+          </div>
+          <div className={getQrCodeClassName('__metadata-value')}>
+            <code>uuid: {linkDeviceInfo.uuid}</code>{' '}
+            <button
+              type="button"
+              onClick={() => onCopyMetadata(linkDeviceInfo.uuid)}
+            >
+              Copy
+            </button>
+          </div>
+          <div className={getQrCodeClassName('__metadata-value')}>
+            <code>pub_key: {linkDeviceInfo.pubKey}</code>{' '}
+            <button
+              type="button"
+              onClick={() => onCopyMetadata(linkDeviceInfo.pubKey)}
+            >
+              Copy
+            </button>
+          </div>
+        </div>
       )}
-      onDoubleClick={onDoubleClick}
-      viewBox="0 0 16 16"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <BrandedQRCode size={16} link={link} color="black" />
-    </svg>
+    </>
   );
+}
+
+function parseLinkDeviceInfo(
+  link: string
+): Readonly<{ uuid: string; pubKey: string }> | undefined {
+  try {
+    const url = new URL(link);
+    const uuid = url.searchParams.get('uuid');
+    const pubKey = url.searchParams.get('pub_key');
+
+    if (!uuid || !pubKey) {
+      return undefined;
+    }
+
+    return { uuid, pubKey };
+  } catch {
+    return undefined;
+  }
 }
 
 function RetryButton({
