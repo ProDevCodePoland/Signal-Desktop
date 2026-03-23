@@ -63,8 +63,6 @@ jobs:
           path: |
             release/**/*.deb
             release/**/*.AppImage
-            release/**/*.yml
-            release/**/*.blockmap
           if-no-files-found: error
 
   macos:
@@ -131,9 +129,6 @@ jobs:
           name: macos-artifacts
           path: |
             release/**/*.dmg
-            release/**/*.zip
-            release/**/*.yml
-            release/**/*.blockmap
           if-no-files-found: error
 
   windows:
@@ -192,10 +187,6 @@ jobs:
           name: windows-artifacts
           path: |
             release/**/*.exe
-            release/**/*.msi
-            release/**/*.nupkg
-            release/**/*.yml
-            release/**/*.blockmap
           if-no-files-found: error
 
   publish-release:
