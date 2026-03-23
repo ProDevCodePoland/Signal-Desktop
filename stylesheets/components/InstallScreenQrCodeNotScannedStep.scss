@@ -111,8 +111,7 @@
       height: $size;
       width: $size;
       background: variables.$color-white;
-      // Pigeon: animation removed to avoid visible QR reset on rotation
-      // animation: 1s module-InstallScreenQrCodeNotScannedStep__slide-in;
+      animation: 1s module-InstallScreenQrCodeNotScannedStep__slide-in;
       position: relative;
       transition: opacity 125ms;
     }
@@ -273,14 +272,16 @@
 
   &__pigeon-copy-btn {
     @include mixins.button-reset;
-    @include mixins.font-caption-bold;
-    color: variables.$color-ultramarine;
-    white-space: nowrap;
-    padding: 2px 10px;
-    border-radius: 4px;
-    border: 1px solid variables.$color-ultramarine;
-    transition: background 120ms, color 120ms;
-    flex-shrink: 0;
+    & {
+      @include mixins.font-caption-bold;
+      color: variables.$color-ultramarine;
+      white-space: nowrap;
+      padding: 2px 10px;
+      border-radius: 4px;
+      border: 1px solid variables.$color-ultramarine;
+      transition: background 120ms, color 120ms;
+      flex-shrink: 0;
+    }
 
     &:hover {
       background: variables.$color-ultramarine;

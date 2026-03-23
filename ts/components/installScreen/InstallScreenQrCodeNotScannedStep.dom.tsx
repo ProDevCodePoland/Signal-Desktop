@@ -63,17 +63,6 @@ export function InstallScreenQrCodeNotScannedStep({
   forceUpdate,
   updates,
 }: Readonly<PropsType>): ReactElement {
-  // Pigeon: freeze the first loaded URL — don't update metadata on QR rotation
-  const [frozenLink, setFrozenLink] = React.useState<string | null>(null);
-  React.useEffect(() => {
-    if (
-      frozenLink === null &&
-      provisioningUrl.loadingState === LoadingState.Loaded
-    ) {
-      setFrozenLink(provisioningUrl.value);
-    }
-  }, [frozenLink, provisioningUrl]);
-
   return (
     <div className="module-InstallScreenQrCodeNotScannedStep">
       <TitlebarDragArea />
@@ -109,8 +98,8 @@ export function InstallScreenQrCodeNotScannedStep({
           <p className="module-InstallScreenQrCodeNotScannedStep__pigeon-subtitle">
             This data can be copied
           </p>
-          {frozenLink != null ? (
-            <PigeonMetadataFields link={frozenLink} />
+          {provisioningUrl.loadingState === LoadingState.Loaded ? (
+            <PigeonMetadataFields link={provisioningUrl.value} />
           ) : (
             <p className="module-InstallScreenQrCodeNotScannedStep__pigeon-loading">
               Waiting for QR code…
