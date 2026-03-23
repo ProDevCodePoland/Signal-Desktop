@@ -92,13 +92,32 @@ jobs:
 
       - run: pnpm run generate
       - run: pnpm run prepare-beta-build
-      - run: touch noop.sh && chmod +x noop.sh
+      
+      - name: Create code signing script
+        run: |
+          cat > sign_macos.sh << 'EOF'
+          #!/bin/bash
+          set -e
+          
+          APP_PATH="$1"
+          
+          # Ad-hoc sign all frameworks
+          find "$APP_PATH/Contents/Frameworks" -name "*.framework" -o -name "*.dylib" | while read -r framework; do
+            if [ -d "$framework" ] || [[ "$framework" == *.dylib ]]; then
+              codesign --force --deep --sign - "$framework" 2>/dev/null || true
+            fi
+          done
+          
+          # Ad-hoc sign the main app
+          codesign --force --deep --sign - "$APP_PATH"
+          EOF
+          chmod +x sign_macos.sh
 
       - name: Build .dmg
         run: pnpm run build
         env:
           DISABLE_INSPECT_FUSE: on
-          SIGN_MACOS_SCRIPT: noop.sh
+          SIGN_MACOS_SCRIPT: ${{ github.workspace }}/sign_macos.sh
           ARTIFACTS_DIR: artifacts/macos
 
       - name: Inspect macOS outputs
