@@ -93,9 +93,10 @@ enum SocketState {
   Done = 'Done',
 }
 
-const ROTATION_INTERVAL = 45 * SECOND;
+// Pigeon: rotation disabled — keep QR code stable for the whole session
+const ROTATION_INTERVAL = 10 * 60 * SECOND; // 10 minutes (was 45s)
 const MAX_OPEN_SOCKETS = 2;
-const MAX_ROTATIONS = 6;
+const MAX_ROTATIONS = 20; // effectively unlimited for a session
 
 const TIMEOUT_ERROR = new PTimeoutError();
 

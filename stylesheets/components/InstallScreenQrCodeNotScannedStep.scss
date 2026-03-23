@@ -111,7 +111,8 @@
       height: $size;
       width: $size;
       background: variables.$color-white;
-      animation: 1s module-InstallScreenQrCodeNotScannedStep__slide-in;
+      // Pigeon: animation removed to avoid visible QR reset on rotation
+      // animation: 1s module-InstallScreenQrCodeNotScannedStep__slide-in;
       position: relative;
       transition: opacity 125ms;
     }
