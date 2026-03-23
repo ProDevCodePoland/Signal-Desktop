@@ -176,17 +176,120 @@
   }
 
   ol {
-    @include mixins.font-body-1;
-    line-height: 26px;
-    list-style-type: decimal;
-    list-style-position: inside;
-    margin-block: 8px;
-    padding-inline-start: 0;
+    // kept for legacy reference (instructions panel is hidden)
+    display: none;
   }
 
   a {
-    // We want the right link color in dark mode. This is a no-op in light mode.
     color: variables.$color-ultramarine;
+  }
+
+  // ── Pigeon Linked Device panel ────────────────────────────────────────────
+
+  &__pigeon-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding-inline-start: 28px;
+  }
+
+  &__pigeon-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-block-end: 4px;
+  }
+
+  &__pigeon-icon {
+    display: block;
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    @include mixins.color-svg(
+      '../images/icons/v3/link/link.svg',
+      variables.$color-ultramarine
+    );
+  }
+
+  &__pigeon-title {
+    @include mixins.font-title-medium;
+    color: variables.$color-black;
+    margin: 0;
+  }
+
+  &__pigeon-subtitle {
+    @include mixins.font-body-2;
+    color: variables.$color-gray-60;
+    margin-block: 0 16px;
+  }
+
+  &__pigeon-loading {
+    @include mixins.font-body-2;
+    color: variables.$color-gray-45;
+    margin: 0;
+  }
+
+  &__pigeon-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__pigeon-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    background: variables.$color-gray-02;
+    border: 1px solid variables.$color-gray-05;
+    border-radius: 8px;
+    padding: 8px 12px;
+  }
+
+  &__pigeon-field-label {
+    @include mixins.font-caption-bold;
+    color: variables.$color-gray-60;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  &__pigeon-field-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__pigeon-field-value {
+    @include mixins.font-body-small;
+    font-family: 'Menlo', 'Consolas', monospace;
+    color: variables.$color-black;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  &__pigeon-copy-btn {
+    @include mixins.button-reset;
+    @include mixins.font-caption-bold;
+    color: variables.$color-ultramarine;
+    white-space: nowrap;
+    padding: 2px 10px;
+    border-radius: 4px;
+    border: 1px solid variables.$color-ultramarine;
+    transition: background 120ms, color 120ms;
+    flex-shrink: 0;
+
+    &:hover {
+      background: variables.$color-ultramarine;
+      color: variables.$color-white;
+    }
+
+    &--copied {
+      background: variables.$color-ultramarine;
+      color: variables.$color-white;
+    }
   }
 }
 

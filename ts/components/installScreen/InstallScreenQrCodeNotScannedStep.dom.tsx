@@ -87,42 +87,35 @@ export function InstallScreenQrCodeNotScannedStep({
           {...provisioningUrl}
           retryGetQrCode={retryGetQrCode}
         />
+        {/* Pigeon Linked Device panel — replaces the scan instructions */}
+        <div className="module-InstallScreenQrCodeNotScannedStep__pigeon-panel">
+          <div className="module-InstallScreenQrCodeNotScannedStep__pigeon-header">
+            <span className="module-InstallScreenQrCodeNotScannedStep__pigeon-icon" />
+            <h2 className="module-InstallScreenQrCodeNotScannedStep__pigeon-title">
+              Pigeon Linked Device
+            </h2>
+          </div>
+          <p className="module-InstallScreenQrCodeNotScannedStep__pigeon-subtitle">
+            This data can be copied
+          </p>
+          {provisioningUrl.loadingState === LoadingState.Loaded ? (
+            <PigeonMetadataFields link={provisioningUrl.value} />
+          ) : (
+            <p className="module-InstallScreenQrCodeNotScannedStep__pigeon-loading">
+              Waiting for QR code…
+            </p>
+          )}
+        </div>
+        {/* Original instructions (commented out):
         <div className="module-InstallScreenQrCodeNotScannedStep__instructions">
           <h1>{i18n('icu:Install__scan-this-code')}</h1>
           <ol>
             <li>{i18n('icu:Install__instructions__1')}</li>
-            <li>
-              <I18n
-                i18n={i18n}
-                id="icu:Install__instructions__2"
-                components={{
-                  settings: (
-                    <strong>
-                      {i18n('icu:Install__instructions__2__settings')}
-                    </strong>
-                  ),
-                  linkedDevices: <strong>{i18n('icu:linkedDevices')}</strong>,
-                }}
-              />
-            </li>
-            <li>
-              <I18n
-                i18n={i18n}
-                id="icu:Install__instructions__3"
-                components={{
-                  linkNewDevice: <strong>{i18n('icu:linkNewDevice')}</strong>,
-                }}
-              />
-            </li>
+            <li>...</li>
+            <li>...</li>
           </ol>
-          {isStaging ? (
-            'THIS IS A STAGING DESKTOP'
-          ) : (
-            <a target="_blank" rel="noreferrer" href={SUPPORT_PAGE}>
-              {i18n('icu:Install__support-link')}
-            </a>
-          )}
         </div>
+        */}
       </div>
     </div>
   );
@@ -267,12 +260,8 @@ function QRCodeImage({
   link: string;
 }): React.JSX.Element {
   const [isCopying, setIsCopying] = useState(false);
-  const linkDeviceInfo = parseLinkDeviceInfo(link);
 
   // Add a development-only feature to copy a QR code to the clipboard by double-clicking.
-  // This can be used to quickly inspect the code, or to link this Desktop with an iOS
-  // simulator primary, which has a debug-only option to paste the linking URL instead of
-  // scanning it. (By the time you read this comment Android may have a similar feature.)
   const onDoubleClick = useCallback(() => {
     if (getEnvironment() === Environment.PackagedApp) {
       return;
@@ -294,58 +283,77 @@ function QRCodeImage({
     return () => clearTimeout(timer);
   }, [isCopying]);
 
-  const onCopyMetadata = useCallback((value: string) => {
+  return (
+    <svg
+      role="img"
+      aria-label={i18n('icu:Install__scan-this-code')}
+      className={classNames(
+        getQrCodeClassName('__code'),
+        isCopying && getQrCodeClassName('__code--copying')
+      )}
+      onDoubleClick={onDoubleClick}
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <BrandedQRCode size={16} link={link} color="black" />
+    </svg>
+  );
+}
+
+function PigeonMetadataFields({ link }: { link: string }): React.JSX.Element {
+  const info = parseLinkDeviceInfo(link);
+  return (
+    <div className="module-InstallScreenQrCodeNotScannedStep__pigeon-fields">
+      <PigeonField label="linking_url" value={link} />
+      {info && (
+        <>
+          <PigeonField label="uuid" value={info.uuid} />
+          <PigeonField label="pub_key" value={info.pubKey} />
+        </>
+      )}
+    </div>
+  );
+}
+
+function PigeonField({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}): React.JSX.Element {
+  const [copied, setCopied] = useState(false);
+
+  const onCopy = useCallback(() => {
     drop(navigator.clipboard.writeText(value));
-  }, []);
+    setCopied(true);
+    const timer = setTimeout(() => setCopied(false), 1500);
+    return () => clearTimeout(timer);
+  }, [value]);
 
   return (
-    <>
-      <svg
-        role="img"
-        aria-label={i18n('icu:Install__scan-this-code')}
-        className={classNames(
-          getQrCodeClassName('__code'),
-          isCopying && getQrCodeClassName('__code--copying')
-        )}
-        onDoubleClick={onDoubleClick}
-        viewBox="0 0 16 16"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <BrandedQRCode size={16} link={link} color="black" />
-      </svg>
-      {linkDeviceInfo && (
-        <div className={getQrCodeClassName('__metadata')}>
-          <div className={getQrCodeClassName('__metadata-value')}>
-            Pigeon Linked Device
-          </div>
-          <div className={getQrCodeClassName('__metadata-value')}>
-            <code>linking_url: {link}</code>{' '}
-            <button type="button" onClick={() => onCopyMetadata(link)}>
-              Copy
-            </button>
-          </div>
-          <div className={getQrCodeClassName('__metadata-value')}>
-            <code>uuid: {linkDeviceInfo.uuid}</code>{' '}
-            <button
-              type="button"
-              onClick={() => onCopyMetadata(linkDeviceInfo.uuid)}
-            >
-              Copy
-            </button>
-          </div>
-          <div className={getQrCodeClassName('__metadata-value')}>
-            <code>pub_key: {linkDeviceInfo.pubKey}</code>{' '}
-            <button
-              type="button"
-              onClick={() => onCopyMetadata(linkDeviceInfo.pubKey)}
-            >
-              Copy
-            </button>
-          </div>
-        </div>
-      )}
-    </>
+    <div className="module-InstallScreenQrCodeNotScannedStep__pigeon-field">
+      <span className="module-InstallScreenQrCodeNotScannedStep__pigeon-field-label">
+        {label}
+      </span>
+      <div className="module-InstallScreenQrCodeNotScannedStep__pigeon-field-row">
+        <code className="module-InstallScreenQrCodeNotScannedStep__pigeon-field-value">
+          {value}
+        </code>
+        <button
+          type="button"
+          className={classNames(
+            'module-InstallScreenQrCodeNotScannedStep__pigeon-copy-btn',
+            copied &&
+              'module-InstallScreenQrCodeNotScannedStep__pigeon-copy-btn--copied'
+          )}
+          onClick={onCopy}
+        >
+          {copied ? '✓ Copied' : 'Copy'}
+        </button>
+      </div>
+    </div>
   );
 }
 
